@@ -24,6 +24,26 @@ Add the following to your `app/assets/javascripts/application.js`:
 
     //= require jquery.form-validator
 
+
+### Easy example
+
+Example how to add Jquery Form Validator to FormHelper `text_field`:
+
+    <div class="controls">
+      <%= f.text_field(:example, class: "field", data: {
+          :validation => "required validate_max_length length50",
+          "validation-error-msg" => "This field is required and cannot be longer than 50 characters."
+        }) %>
+    </div>
+
+Then add following to your `app/assets/javascripts/application.js`
+
+  $(document).ready(function() {
+    $.validate();
+  });
+
+Other configuration options can be seen here: http://formvalidator.net
+
 ### Added modules:
 
 * security
@@ -42,17 +62,6 @@ The following code shows you how to load the module.
     </script>
 
 Read the documentation for the modules at http://formvalidator.net
-
-Example how to add Jquery Form Validator to FormHelper `text_field`:
-
-    <div class="controls">
-      <%= f.text_field(:example, class: "field", data: {
-          :validation => "required validate_max_length length50",
-          "validation-error-msg" => "This field is required and cannot be longer than 50 characters."
-        }) %>
-    </div>
-
-Other configuration options can be seen here: http://formvalidator.net
 
 ## Changes
 

@@ -38,11 +38,13 @@ Example how to add Jquery Form Validator to FormHelper `text_field`:
 
 Then add following to your `app/assets/javascripts/application.js`
 
-  $(document).ready(function() {
-    $.validate();
-  });
+    <script>
+      $(document).ready(function() {
+        $.validate();
+      });
+    </script>
 
-Other configuration options can be seen here: http://formvalidator.net
+Other configuration options can be seen here: http://formvalidator.net/#configuration
 
 ### Added modules:
 
@@ -68,6 +70,8 @@ Read the documentation for the modules at http://formvalidator.net
 See [CHANGELOG.md](CHANGELOG.md) in this repository for detailed changes.
 
 ## Contributing makes this repo happy!
+
+Working on to make Jquery Form Validator to work with Rails default errors. So please just hop in and help out! :smile:
 
 1. Fork it
 2. Create your feature branch (`git checkout -b my-new-feature`)

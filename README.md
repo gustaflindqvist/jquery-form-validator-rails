@@ -1,8 +1,6 @@
 # Jquery::Form::Validator::Rails
 
-Jquery-form-validator-rails gem is based on:
-
-https://github.com/victorjonsson/jQuery-Form-Validator
+Jquery-form-validator-rails gem is based on Victor Jonsson's jQuery plugin: https://github.com/victorjonsson/jQuery-Form-Validator
 
 ## Installation
 
@@ -71,7 +69,7 @@ See [CHANGELOG.md](CHANGELOG.md) in this repository for detailed changes.
 
 ## Contributing makes this repo happy!
 
-Working on to make Jquery Form Validator to work with Rails default errors. So please just hop in and help out! :smile:
+Please just hop in and help out! :smile:
 
 1. Fork it
 2. Create your feature branch (`git checkout -b my-new-feature`)

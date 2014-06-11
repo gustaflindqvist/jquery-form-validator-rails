@@ -1,4 +1,5 @@
 #encoding: utf-8
+#encoding: utf-8
 
 # -*- encoding: utf-8 -*-
 lib = File.expand_path('../lib', __FILE__)
@@ -7,7 +8,7 @@ require 'jquery/form/validator/rails/version'
 
 Gem::Specification.new do |gem|
   gem.name          = "jquery-form-validator-rails"
-  gem.version       = Jquery::Validation::Rails::VERSION
+  gem.version       = Jquery::Form::Validator::Rails::VERSION
   gem.authors       = ["Gustaf Lindqvist"]
   gem.email         = ["gustaf.lindqvist@gmail.com"]
   gem.description   = %q{Integrate the jQuery Form Validator plugin into the Rails asset pipeline}

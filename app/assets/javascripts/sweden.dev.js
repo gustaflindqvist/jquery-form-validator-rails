@@ -12,8 +12,8 @@
  *  - validate_swephone
  *
  * @website http://formvalidator.net/#swedish-validators
- * @license Dual licensed under the MIT or GPL Version 2 licenses
- * @version 2.2.beta.50
+ * @license MIT
+ * @version 2.2.82
  */
 (function($, window) {
 

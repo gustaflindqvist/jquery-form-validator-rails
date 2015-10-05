@@ -8,9 +8,9 @@
  *  - file size
  *  - file extension
  *
- * @website http://formvalidator.net/
- * @license Dual licensed under the MIT or GPL Version 2 licenses
- * @version 2.2.beta.50
+ * @website http://formvalidator.net/#file-validators
+ * @license MIT
+ * @version 2.2.82
  */
 (function($, window) {
 
@@ -18,39 +18,66 @@
 
     var SUPPORTS_FILE_READER = typeof window.FileReader != 'undefined',
 
-        /**
-         * @return {Array}
-         */
-            _getTypes = function($input) {
-            var allowedTypes = $.split( ($input.valAttr('allowing') || '').toLowerCase() );
+      /**
+      * @return {Array}
+      */
+      _getTypes = function($input) {
+        var allowedTypes = $.split( ($input.valAttr('allowing') || '').toLowerCase() );
+        if( $.inArray('jpg', allowedTypes) > -1 && $.inArray('jpeg', allowedTypes) == -1)
+          allowedTypes.push('jpeg');
+        else if( $.inArray('jpeg', allowedTypes) > -1 && $.inArray('jpg', allowedTypes) == -1)
+          allowedTypes.push('jpg');
+        return allowedTypes;
+      },
 
-            if( $.inArray('jpg', allowedTypes) > -1 && $.inArray('jpeg', allowedTypes) == -1)
-                allowedTypes.push('jpeg');
-            else if( $.inArray('jpeg', allowedTypes) > -1 && $.inArray('jpg', allowedTypes) == -1)
-                allowedTypes.push('jpg');
-            return allowedTypes;
-        },
+      /**
+      * @param {Object} obj
+      * @param {String} key
+      * @param {String} insert
+      * @param {Object} lang
+      */
+      _generateErrorMsg = function(obj, key, insert, lang) {
+        var msg = lang[key] || '';
+        obj.errorMessageKey = ''; // only use message attached to this object
+        obj.errorMessage = msg.replace('\%s', insert);
+      },
 
-        /**
-         * @param {Object} obj
-         * @param {String} key
-         * @param {String} insert
-         * @param {Object} lang
-         */
-            _generateErrorMsg = function(obj, key, insert, lang) {
-            var msg = lang[key];
-            obj.errorMessageKey = ''; // only use message attached to this object
-            obj.errorMessage = msg.replace('\%s', insert);
-        },
+      /**
+      * @param {String} msg
+      */
+      _log = function(msg) {
+        if( window.console && window.console.log ) {
+          window.console.log(msg);
+        }
+      },
 
-        /**
-         * @param {String} msg
-         */
-            _log = function(msg) {
-            if( window.console && window.console.log ) {
-                window.console.log(msg);
-            }
+      /**
+       * @param {String} imgPath
+       * @param {Function} successCallback
+       * @param {Function} errCallback
+       * @private
+       */
+      _loadImage = function(imgPath, successCallback, errCallback) {
+        var reader = new FileReader(),
+          image  = new Image();
+
+        reader.readAsDataURL(imgPath);
+
+        reader.onload = function(fileObj) {
+
+          image.onload = function() {
+            $(window).trigger('imageValidation', [this]);
+            successCallback(this);
+          };
+
+          image.onerror= function() {
+            errCallback();
+          };
+
+          image.src = fileObj.target.result;
+
         };
+      };
 
     /*
      * Validate mime type (falls back on validate_extension in older browsers)
@@ -88,7 +115,7 @@
 
             } else {
                 _log('FileReader not supported by browser, will check file extension');
-                return $.formUtils.validators.validate_extension.validatorFunction(str, $input);
+                return $.formUtils.validators.validate_extension.validatorFunction(str, $input, conf, language);
             }
         },
         errorMessage : '',
@@ -115,6 +142,7 @@
                     return false;
                 }
             });
+
             return valid;
         },
         errorMessage : '',
@@ -171,6 +199,194 @@
             return parseInt(sizeName, 10);
         }
     };
+
+    var disableFormSubmit = function() {
+      return false;
+    };
+
+   /**
+    * Attach dimension check onto formUtils only for unit testing purpose
+    * @param {HTMLImageElement} img
+    * @param {String} dimDeclaration
+    * @param {Boolean|String} Returns error message if image was invalid, false otherwise
+    */
+    $.formUtils.checkImageDimension = function(img, dimDeclaration, language) {
+      var error = false,
+          restrictedDim = {width:0, height:0},
+          getDimRestriction = function(dimDeclaration) {
+            dimDeclaration = dimDeclaration.replace('min', '').replace('max', '');
+            var chunks = dimDeclaration.split('x');
+            restrictedDim.width = chunks[0];
+            restrictedDim.height = chunks[1] ? chunks[1] : chunks[0];
+          },
+          minDeclaration = false,
+          maxDeclaration = false,
+          declarationParts = dimDeclaration.split('-');
+
+      if( declarationParts.length == 1 ) {
+        if( declarationParts[0].indexOf('min') === 0 ) {
+          minDeclaration = declarationParts[0];
+        } else {
+          maxDeclaration = declarationParts[0];
+        }
+      } else {
+        minDeclaration = declarationParts[0];
+        maxDeclaration = declarationParts[1];
+      }
+
+      if( minDeclaration ) {
+        // check min
+        getDimRestriction(minDeclaration);
+        if( img.width < restrictedDim.width || img.height < restrictedDim.height )  {
+          error = language.imageTooSmall + ' ('+language.min+' '+restrictedDim.width+'x'+restrictedDim.height+'px)';
+        }
+      }
+
+      if( !error && maxDeclaration ) {
+        // Check max
+        getDimRestriction(maxDeclaration);
+        if( img.width > restrictedDim.width || img.height > restrictedDim.height ) {
+          if( img.width > restrictedDim.width ) {
+            error = language.imageTooWide +' '+restrictedDim.width+'px';
+          } else {
+            error = language.imageTooTall +' '+restrictedDim.height+'px';
+          }
+          error += ' ('+language.max+' '+restrictedDim.width+'x'+restrictedDim.height+'px)';
+        }
+      }
+
+      return error;
+    };
+
+    /**
+     * Attach ratio validation onto formUtils only for unit testing purpose
+     * @param {HTMLImageElement} img
+     * @param {String} dimDeclaration
+     * @param {Boolean|String} Returns error message if image was invalid, false otherwise
+     */
+    $.formUtils.checkImageRatio = function(img, ratioDeclaration, language) {
+      var ratio = img.width / img.height,
+          minRatio = false,
+          maxRatio = false,
+          calculateRatio = function(declaration) {
+            var dims = declaration.replace('max', '').replace('min', '').split(':');
+            return dims[0] / dims[1];
+          },
+          declarationParts = ratioDeclaration.split('-'),
+          isWithin = function(val, min, max) {
+            return val >= min && val <= max;
+          };
+
+        if( declarationParts.length == 1 ) {
+          if( ratio !== calculateRatio(declarationParts[0]) )
+            return language.imageRatioNotAccepted;
+        }
+        else if( declarationParts.length == 2 && !isWithin(ratio, calculateRatio(declarationParts[0]), calculateRatio(declarationParts[1])) ) {
+          return language.imageRatioNotAccepted;
+        }
+
+        return false;
+    };
+
+    /**
+     * Validate image dimension
+     */
+    $.formUtils.addValidator({
+      name : 'dimension',
+      validatorFunction : function(val, $input, conf, language, $form) {
+
+        if( SUPPORTS_FILE_READER ) {
+          var hasCorrectDim = true,
+            file = $input.get(0).files || [];
+
+          if( $input.attr('data-validation').indexOf('mime') == -1) {
+            alert('You should validate file type being jpg, gif or png on input '+$input[0].name);
+            return false;
+          }
+          else if( file.length > 1 ) {
+            alert('Validating image dimensions does not support inputs allowing multiple files');
+            return false;
+          } else if( file.length == 0) {
+            return true;
+          }
+
+          if( $input.valAttr('has-valid-dim') ) {
+            return true;
+          }
+          else if( $input.valAttr('has-not-valid-dim') ) {
+            this.errorMessage = language['wrongFileDim'] + ' '+$input.valAttr('has-not-valid-dim');
+            return false;
+          }
+          else if($.formUtils.eventType == 'keyup') {
+            return null;
+          }
+
+          var wasFormSubmit = false;
+
+          if( $.formUtils.isValidatingEntireForm ) {
+            wasFormSubmit = true;
+            $.formUtils.haltValidation = true;
+            $form
+              .bind('submit', disableFormSubmit)
+              .addClass('on-blur');
+          }
+
+          _loadImage(file[0], function(img) {
+            var error = false;
+
+            if( $input.valAttr('dimension') )
+              error = $.formUtils.checkImageDimension(img, $input.valAttr('dimension'), language);
+
+            if( !error && $input.valAttr('ratio') )
+              error = $.formUtils.checkImageRatio(img, $input.valAttr('ratio'), language);
+
+            // Set validation result flag on input
+            if( error ) {
+              $input.valAttr('has-not-valid-dim', error);
+            }
+            else {
+              $input.valAttr('has-valid-dim', 'true');
+            }
+
+            // Remove validation flag when input changed
+            if( !$input.valAttr('has-keyup-event') ) {
+              $input
+                .valAttr('has-keyup-event', '1')
+                .bind('keyup change', function(evt) {
+                  if( evt.keyCode != 9 && evt.keyCode != 16 ) {
+                    $(this)
+                      .valAttr('has-not-valid-dim', false)
+                      .valAttr('has-valid-dim', false);
+                  }
+                });
+            }
+
+            if( wasFormSubmit ) {
+              $.formUtils.haltValidation = false;
+              $form
+                .removeClass('on-blur')
+                .get(0).onsubmit = function() {};
+
+              $form.unbind('submit', disableFormSubmit);
+              $form.trigger('submit'); // fire submit once more
+
+            } else {
+              $input.trigger('blur'); // triggers the validation once more
+            }
+
+          }, function(err) {
+            throw err;
+          });
+
+          return true;
+        }
+
+        return hasCorrectDim;
+      },
+      errorMessage : '',
+      errorMessageKey: '' // error message created dynamically
+    //  errorMessageKey: 'wrongFileDim'
+    });
 
     /*
      * This event listener will remove error messages for file

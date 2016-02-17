@@ -9,8 +9,8 @@
  *  - longitude and latitude
  *
  * @website http://formvalidator.net/#location-validators
- * @license Dual licensed under the MIT or GPL Version 2 licenses
- * @version 2.2.beta.50
+ * @license MIT
+ * @version 2.2.82
  */
 (function($) {
 
@@ -44,7 +44,7 @@
     $.formUtils.addValidator({
         name : 'longlat',
         validatorFunction : function(str) {
-            var regexp = /^[+-]?\d+\.\d+, ?[+-]?\d+\.\d+$/;
+            var regexp = /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/;
             return regexp.test(str);
         },
         errorMessage:'',
